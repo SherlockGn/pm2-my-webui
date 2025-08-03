@@ -1,0 +1,432 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table {
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table th {
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    border: none;
+    vertical-align: middle;
+    padding: 15px 12px;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 4px;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    border-radius: 20px;
+}
+
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 15px 15px 0 0;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.toast {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.toast-header {
+    border-radius: 10px 10px 0 0;
+    border-bottom: none;
+}
+
+/* Status indicators */
+.fa-circle.text-success {
+    animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Loading states */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body h5 {
+        font-size: 0.9rem;
+    }
+    
+    .card-body h3 {
+        font-size: 1.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Empty state */
+.text-muted .fa-inbox {
+    opacity: 0.3;
+}
+
+/* Process status colors */
+.bg-success { background-color: #28a745 !important; }
+.bg-danger { background-color: #dc3545 !important; }
+.bg-warning { background-color: #ffc107 !important; }
+.bg-info { background-color: #17a2b8 !important; }
+.bg-secondary { background-color: #6c757d !important; }
+
+/* Logs container styling */
+.logs-container {
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    border: 1px solid #343a40;
+    max-height: 500px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.logs-content {
+    margin: 0;
+    padding: 15px;
+    background-color: #1e1e1e;
+    color: #f8f9fa;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    border-radius: 8px;
+    min-height: 200px;
+}
+
+.logs-content code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: inherit;
+}
+
+/* Custom scrollbar for logs */
+.logs-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.logs-container::-webkit-scrollbar-track {
+    background: #2d3436;
+    border-radius: 4px;
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+    background: #636e72;
+    border-radius: 4px;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover {
+    background: #74b9ff;
+}
+
+/* Log modal improvements */
+.modal-xl .modal-dialog {
+    max-width: 90%;
+}
+
+/* Log controls */
+.form-select-sm, .btn-sm {
+    border-radius: 6px;
+}
+
+/* Custom Modal Improvements */
+.modal-dialog-centered {
+    min-height: calc(100vh - 60px);
+}
+
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Custom confirm/alert styling */
+#customConfirmModal .modal-content,
+#customAlertModal .modal-content {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#customConfirmModal .modal-body,
+#customAlertModal .modal-body {
+    padding: 2rem 1.5rem;
+}
+
+/* Alert styling within modals */
+#customConfirmModal .alert {
+    border-radius: 8px;
+    border: none;
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+/* Icon styling in custom modals */
+#customConfirmModal .fa-2x,
+#customAlertModal .fa-2x {
+    flex-shrink: 0;
+}
+
+/* File Browser Styling */
+.file-browser {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.file-browser .list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+}
+
+.file-browser .list-group-item:first-child {
+    border-top: none;
+}
+
+.file-browser .list-group-item:last-child {
+    border-bottom: none;
+}
+
+.file-browser .list-group-item i {
+    width: 20px;
+    text-align: center;
+}
+
+.file-browser .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.breadcrumb {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 0;
+}
+
+.breadcrumb-item a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+/* System information styles */
+.system-info-section {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    border-left: 4px solid #007bff;
+}
+
+.system-info-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: white;
+    border-radius: 0.375rem;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.system-info-item:hover {
+    border-color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+}
+
+.system-info-item i {
+    font-size: 1.25rem;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.system-info-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.system-info-content small {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+
+.system-info-content .fw-bold {
+    font-size: 0.9rem;
+    color: #495057;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .system-info-section {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .system-info-item {
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .system-info-item i {
+        font-size: 1rem;
+        margin-right: 0.5rem;
+    }
+    
+    .system-info-content small {
+        font-size: 0.7rem;
+    }
+    
+    .system-info-content .fw-bold {
+        font-size: 0.85rem;
+    }
+}
+
+/* Upload Progress Styling */
+.upload-progress-card {
+    border: 2px solid #17a2b8;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.15);
+}
+
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+.upload-status {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* File Browser Enhancements */
+.file-browser {
+    position: relative;
+}
+
+.file-browser .list-group-item {
+    transition: all 0.2s ease;
+}
+
+.file-browser .list-group-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(2px);
+}
+
+/* Create Folder Modal */
+#createFolderModal .modal-content {
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+#createFolderModal .form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}

@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>PM2 WebUI</title>
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <link href="https://unpkg.com/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <link href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet" />
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body>
+        <div id="app">
+            <nav class="navbar navbar-dark bg-dark">
+                <div class="container-fluid">
+                    <span class="navbar-brand mb-0 h1">
+                        <i class="fas fa-server me-2"></i>
+                        PM2 WebUI
+                    </span>
+                    <div class="d-flex align-items-center text-white">
+                        <!-- Login/Logout Section -->
+                        <div v-if="authEnabled && !isAuthenticated" class="me-3">
+                            <button class="btn btn-outline-warning btn-sm" @click="showLoginModal">
+                                <i class="fas fa-sign-in-alt"></i>
+                                Login
+                            </button>
+                        </div>
+                        <div v-if="authEnabled && isAuthenticated" class="me-3">
+                            <span class="badge bg-success me-2">
+                                <i class="fas fa-lock"></i>
+                                Authenticated
+                            </span>
+                            <button class="btn btn-outline-warning btn-sm me-1" @click="showChangePasswordModal">
+                                <i class="fas fa-key"></i>
+                                Change Password
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" @click="logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </button>
+                        </div>
+                        <button class="btn btn-outline-light btn-sm me-2" @click="showSystemInfo">
+                            <i class="fas fa-info-circle"></i>
+                            System Info
+                        </button>
+                        <button class="btn btn-outline-light btn-sm" @click="refreshProcesses">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid mt-4">
+                <!-- Authentication Required Overlay -->
+                <div v-if="authEnabled && !isAuthenticated" class="row">
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <i class="fas fa-lock fa-4x text-warning mb-3"></i>
+                                    <h3 class="text-warning">Authentication Required</h3>
+                                    <p class="text-muted mb-4">You need to log in to access the PM2 WebUI dashboard.</p>
+                                    <button class="btn btn-warning btn-lg" @click="showLoginModal">
+                                        <i class="fas fa-sign-in-alt me-2"></i>
+                                        Login
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content (only visible when authenticated or auth disabled) -->
+                <div v-if="!authEnabled || isAuthenticated">
+                    <!-- System Overview -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>System Overview</h4>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h5>Total Processes</h5>
+                                                    <h3>{{ systemInfo.totalProcesses || 0 }}</h3>
+                                                </div>
+                                                <i class="fas fa-list fa-2x"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h5>Running</h5>
+                                                    <h3>{{ systemInfo.runningProcesses || 0 }}</h3>
+                                                </div>
+                                                <i class="fas fa-play fa-2x"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-warning text-white">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h5>Stopped</h5>
+                                                    <h3>{{ systemInfo.stoppedProcesses || 0 }}</h3>
+                                                </div>
+                                                <i class="fas fa-stop fa-2x"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card bg-danger text-white">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h5>Errored</h5>
+                                                    <h3>{{ systemInfo.erroredProcesses || 0 }}</h3>
+                                                </div>
+                                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Functions -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>Advanced Functions</h4>
+                            <div class="row g-3">
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fab fa-git-alt me-2 text-warning"></i>
+                                                Git Clone
+                                            </h6>
+                                            <p class="card-text small text-muted">
+                                                Clone a repository to the apps directory
+                                            </p>
+                                            <button
+                                                class="btn btn-outline-warning btn-sm w-100"
+                                                @click="showGitCloneModal">
+                                                <i class="fas fa-download me-1"></i>
+                                                Clone Repository
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fab fa-git-alt me-2 text-info"></i>
+                                                Git Pull
+                                            </h6>
+                                            <p class="card-text small text-muted">Update an existing repository</p>
+                                            <button class="btn btn-outline-info btn-sm w-100" @click="showGitPullModal">
+                                                <i class="fas fa-sync me-1"></i>
+                                                Pull Updates
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fab fa-npm me-2 text-danger"></i>
+                                                NPM Install
+                                            </h6>
+                                            <p class="card-text small text-muted">Install dependencies for a project</p>
+                                            <button
+                                                class="btn btn-outline-danger btn-sm w-100"
+                                                @click="showNpmInstallModal">
+                                                <i class="fas fa-box me-1"></i>
+                                                Install Dependencies
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-folder-open me-2 text-success"></i>
+                                                File Manager
+                                            </h6>
+                                            <p class="card-text small text-muted">
+                                                Browse and delete files/folders in apps directory
+                                            </p>
+                                            <button
+                                                class="btn btn-outline-success btn-sm w-100"
+                                                @click="showFileManagerModal">
+                                                <i class="fas fa-trash-alt me-1"></i>
+                                                Manage Files
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Process Management -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4>Process Management</h4>
+                                <button
+                                    class="btn btn-success"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#startProcessModal">
+                                    <i class="fas fa-plus"></i>
+                                    Start New Process
+                                </button>
+                            </div>
+
+                            <!-- Process Table -->
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>CPU</th>
+                                            <th>Memory</th>
+                                            <th>Uptime</th>
+                                            <th>Restarts</th>
+                                            <th>Link</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="process in processes" :key="process.pm_id">
+                                            <td>{{ process.pm_id }}</td>
+                                            <td>{{ process.name }}</td>
+                                            <td>
+                                                <span class="badge" :class="getTypeClass(process)">
+                                                    {{ getProcessType(process) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge" :class="getStatusClass(process.pm2_env.status)">
+                                                    {{ process.pm2_env.status }}
+                                                </span>
+                                            </td>
+                                            <td>{{ formatCpu(process.monit?.cpu) }}%</td>
+                                            <td>{{ formatMemory(process.monit?.memory) }}</td>
+                                            <td>{{ formatUptime(process.pm2_env.pm_uptime) }}</td>
+                                            <td>{{ process.pm2_env.restart_time }}</td>
+                                            <td>
+                                                <div v-if="getProcessLink(process)" class="d-flex align-items-center">
+                                                    <a
+                                                        :href="getProcessLink(process)"
+                                                        target="_blank"
+                                                        class="btn btn-outline-info btn-sm me-1"
+                                                        :title="`Auto-generated link: ${getProcessLink(process)} (may be incorrect)`"
+                                                        data-bs-toggle="tooltip">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
+                                                </div>
+                                                <span v-else class="text-muted">-</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button
+                                                        class="btn btn-outline-success"
+                                                        @click="startProcess(process.pm_id)"
+                                                        :disabled="process.pm2_env.status === 'online'"
+                                                        title="Start">
+                                                        <i class="fas fa-play"></i>
+                                                    </button>
+                                                    <button
+                                                        class="btn btn-outline-warning"
+                                                        @click="stopProcess(process.pm_id)"
+                                                        :disabled="process.pm2_env.status === 'stopped'"
+                                                        title="Stop">
+                                                        <i class="fas fa-stop"></i>
+                                                    </button>
+                                                    <button
+                                                        class="btn btn-outline-info"
+                                                        @click="restartProcess(process.pm_id)"
+                                                        title="Restart">
+                                                        <i class="fas fa-redo"></i>
+                                                    </button>
+                                                    <button
+                                                        class="btn btn-outline-success"
+                                                        @click="showProcessLogs(process)"
+                                                        title="View Logs">
+                                                        <i class="fas fa-file-alt"></i>
+                                                    </button>
+                                                    <button
+                                                        class="btn btn-outline-danger"
+                                                        @click="deleteProcess(process.pm_id)"
+                                                        title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                    <button
+                                                        class="btn btn-outline-secondary"
+                                                        @click="showProcessDetails(process)"
+                                                        title="Details">
+                                                        <i class="fas fa-info-circle"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div v-if="processes.length === 0" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No processes found. Start a new process to get started.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Start Process Modal -->
+                <div class="modal fade" id="startProcessModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Start New Process</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form @submit.prevent="startNewProcess">
+                                    <div class="mb-3">
+                                        <label class="form-label">Process Type</label>
+                                        <select
+                                            class="form-control"
+                                            v-model="newProcess.type"
+                                            @change="onProcessTypeChange">
+                                            <option value="script">Node.js Application</option>
+                                            <option value="static">Static File Server</option>
+                                        </select>
+                                    </div>
+
+                                    <div v-if="newProcess.type === 'script'" class="mb-3">
+                                        <label class="form-label">Script Path *</label>
+                                        <div class="input-group">
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                v-model="newProcess.script"
+                                                :required="newProcess.type === 'script'"
+                                                placeholder="e.g., /path/to/app.js" />
+                                            <button
+                                                type="button"
+                                                class="btn btn-outline-secondary"
+                                                @click="openFileBrowser('file')"
+                                                title="Browse files">
+                                                <i class="fas fa-folder-open"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">
+                                            <small class="text-muted">
+                                                💡 Click the folder icon to browse files in the apps directory
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div v-if="newProcess.type === 'static'">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                Directory Path *
+                                                <i
+                                                    class="fas fa-info-circle text-info ms-1"
+                                                    data-bs-toggle="tooltip"
+                                                    data-bs-placement="top"
+                                                    title="Tip: If you paste a file path (like index.html), we'll automatically use its parent directory"></i>
+                                            </label>
+                                            <div class="input-group">
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    v-model="newProcess.directory"
+                                                    @blur="normalizeDirectoryPath"
+                                                    :required="newProcess.type === 'static'"
+                                                    placeholder="/Users/tianhegong/Documents/Coding/pm2-my-webui/example/static-site" />
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-outline-secondary"
+                                                    @click="openFileBrowser('directory')"
+                                                    title="Browse directories">
+                                                    <i class="fas fa-folder-open"></i>
+                                                </button>
+                                            </div>
+                                            <div class="form-text">
+                                                Full absolute path to the directory containing your static files (HTML,
+                                                CSS, JS, etc.)
+                                                <br />
+                                                <small class="text-muted">
+                                                    💡 Click the folder icon to browse directories in the apps folder
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Port *</label>
+                                            <input
+                                                type="number"
+                                                class="form-control"
+                                                v-model="newProcess.port"
+                                                :required="newProcess.type === 'static'"
+                                                placeholder="8080"
+                                                min="1"
+                                                max="65535" />
+                                            <div class="form-text">
+                                                Port number for the static file server (e.g., 8080, 3000, 9000)
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Process Name</label>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            v-model="newProcess.name"
+                                            :placeholder="getNamePlaceholder()" />
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-success" @click="startNewProcess">
+                                    Start Process
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Process Details Modal -->
+                <div class="modal fade" id="processDetailsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-info-circle"></i>
+                                    Process Details: {{ selectedProcess?.name || 'Unknown' }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" v-if="selectedProcess">
+                                <div class="row">
+                                    <!-- Basic Information -->
+                                    <div class="col-md-6">
+                                        <div class="card mb-3">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-id-badge"></i>
+                                                    Basic Information
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <table class="table table-sm table-borderless">
+                                                    <tr>
+                                                        <td><strong>Process ID:</strong></td>
+                                                        <td>{{ selectedProcess.pm_id }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Name:</strong></td>
+                                                        <td>{{ selectedProcess.name }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Status:</strong></td>
+                                                        <td>
+                                                            <span
+                                                                class="badge"
+                                                                :class="getStatusClass(selectedProcess.pm2_env?.status)">
+                                                                {{ selectedProcess.pm2_env?.status }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>PID:</strong></td>
+                                                        <td>{{ selectedProcess.pid || 'N/A' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Script:</strong></td>
+                                                        <td class="text-break">
+                                                            {{ selectedProcess.pm2_env?.pm_exec_path || 'N/A' }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>CWD:</strong></td>
+                                                        <td class="text-break">
+                                                            {{ selectedProcess.pm2_env?.pm_cwd || 'N/A' }}
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Runtime Information -->
+                                    <div class="col-md-6">
+                                        <div class="card mb-3">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-clock"></i>
+                                                    Runtime Information
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <table class="table table-sm table-borderless">
+                                                    <tr>
+                                                        <td><strong>Uptime:</strong></td>
+                                                        <td>{{ formatUptime(selectedProcess.pm2_env?.pm_uptime) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Restart Count:</strong></td>
+                                                        <td>{{ selectedProcess.pm2_env?.restart_time || 0 }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Created:</strong></td>
+                                                        <td>{{ formatDate(selectedProcess.pm2_env?.created_at) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>PM2 Version:</strong></td>
+                                                        <td>{{ selectedProcess.pm2_env?.version || 'N/A' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Node Version:</strong></td>
+                                                        <td>{{ selectedProcess.pm2_env?.node_version || 'N/A' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Interpreter:</strong></td>
+                                                        <td>
+                                                            {{ selectedProcess.pm2_env?.exec_interpreter || 'N/A' }}
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Performance Monitoring -->
+                                    <div class="col-md-6">
+                                        <div class="card mb-3">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-chart-line"></i>
+                                                    Performance
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <table class="table table-sm table-borderless">
+                                                    <tr>
+                                                        <td><strong>CPU Usage:</strong></td>
+                                                        <td>{{ formatCpu(selectedProcess.monit?.cpu) }}%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Memory Usage:</strong></td>
+                                                        <td>{{ formatMemory(selectedProcess.monit?.memory) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Heap Used:</strong></td>
+                                                        <td>{{ formatMemory(selectedProcess.monit?.heap_used) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Heap Total:</strong></td>
+                                                        <td>{{ formatMemory(selectedProcess.monit?.heap_total) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>External:</strong></td>
+                                                        <td>{{ formatMemory(selectedProcess.monit?.external) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Event Loop Latency:</strong></td>
+                                                        <td>
+                                                            {{ selectedProcess.monit?.loop_delay?.toFixed(2) || 'N/A'
+                                                            }}ms
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Environment & Configuration -->
+                                    <div class="col-md-6">
+                                        <div class="card mb-3">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-cog"></i>
+                                                    Configuration
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <table class="table table-sm table-borderless">
+                                                    <tr>
+                                                        <td><strong>Instance Mode:</strong></td>
+                                                        <td>{{ selectedProcess.pm2_env?.exec_mode || 'N/A' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Instances:</strong></td>
+                                                        <td>{{ selectedProcess.pm2_env?.instances || 1 }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Max Memory:</strong></td>
+                                                        <td>
+                                                            {{ selectedProcess.pm2_env?.max_memory_restart || 'N/A' }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Watch Mode:</strong></td>
+                                                        <td>
+                                                            {{ selectedProcess.pm2_env?.watch ? 'Enabled' : 'Disabled'
+                                                            }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Auto Restart:</strong></td>
+                                                        <td>
+                                                            {{ selectedProcess.pm2_env?.autorestart ? 'Enabled' :
+                                                            'Disabled' }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Log File:</strong></td>
+                                                        <td class="text-break">
+                                                            {{ selectedProcess.pm2_env?.pm_out_log_path || 'N/A' }}
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-success" @click="showProcessLogs(selectedProcess)">
+                                    <i class="fas fa-file-alt"></i>
+                                    View Logs
+                                </button>
+                                <button type="button" class="btn btn-info" @click="refreshProcessDetails">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Refresh Details
+                                </button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Process Logs Modal -->
+                <div
+                    class="modal fade"
+                    id="processLogsModal"
+                    tabindex="-1"
+                    aria-labelledby="processLogsModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="processLogsModalLabel">
+                                    <i class="fas fa-file-alt"></i>
+                                    Process Logs - {{ logProcess?.name || 'Unknown' }}
+                                </h5>
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <!-- Log Controls -->
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <label for="logLines" class="form-label">Number of Lines</label>
+                                        <select
+                                            class="form-select form-select-sm"
+                                            id="logLines"
+                                            v-model="logOptions.lines">
+                                            <option value="50">50 lines</option>
+                                            <option value="100">100 lines</option>
+                                            <option value="200">200 lines</option>
+                                            <option value="500">500 lines</option>
+                                            <option value="1000">1000 lines</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="logFrom" class="form-label">Read From</label>
+                                        <select
+                                            class="form-select form-select-sm"
+                                            id="logFrom"
+                                            v-model="logOptions.from">
+                                            <option value="tail">End (tail)</option>
+                                            <option value="head">Beginning (head)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="logType" class="form-label">Log Type</label>
+                                        <select
+                                            class="form-select form-select-sm"
+                                            id="logType"
+                                            v-model="logOptions.type">
+                                            <option value="combined">Combined</option>
+                                            <option value="output">Output Only</option>
+                                            <option value="error">Error Only</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary btn-sm me-2"
+                                            @click="refreshLogs"
+                                            :disabled="logsLoading">
+                                            <i class="fas fa-sync-alt" :class="{ 'fa-spin': logsLoading }"></i>
+                                            {{ logsLoading ? 'Loading...' : 'Refresh' }}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-outline-secondary btn-sm"
+                                            @click="clearLogsDisplay">
+                                            <i class="fas fa-eraser"></i>
+                                            Clear
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Log Info -->
+                                <div class="alert alert-info" v-if="logData.logs && logData.logs.length > 0">
+                                    <small>
+                                        <i class="fas fa-info-circle"></i>
+                                        Showing {{ logData.totalLines }} lines from {{ logData.from }} of {{
+                                        logData.type }} logs
+                                        <br />
+                                        <strong>File:</strong>
+                                        {{ logData.file }}
+                                    </small>
+                                </div>
+
+                                <!-- Logs Display -->
+                                <div class="logs-container">
+                                    <pre
+                                        class="logs-content"
+                                        v-if="logData.logs && logData.logs.length > 0"><code>{{ logData.logs.join('\n') }}</code></pre>
+                                    <div class="alert alert-secondary" v-else-if="!logsLoading">
+                                        <i class="fas fa-info-circle"></i>
+                                        {{ logData.message || 'No logs available or logs are empty.' }}
+                                    </div>
+                                    <div class="text-center" v-if="logsLoading">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">Loading logs...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File/Folder Browser Modal -->
+                <div
+                    class="modal fade"
+                    id="fileBrowserModal"
+                    tabindex="-1"
+                    aria-labelledby="fileBrowserModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="fileBrowserModalLabel">
+                                    <i class="fas fa-folder-open"></i>
+                                    &nbsp;
+                                    <span v-if="browserData.targetMode === 'fileManager'">
+                                        File Manager - Apps Directory
+                                    </span>
+                                    <span v-else>Browse Apps Directory</span>
+                                </h5>
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <!-- Current Path -->
+                                <div class="mb-3">
+                                    <nav aria-label="breadcrumb">
+                                        <ol class="breadcrumb">
+                                            <li class="breadcrumb-item">
+                                                <a href="#" @click.prevent="browsePath('')">
+                                                    <i class="fas fa-home"></i>
+                                                    apps
+                                                </a>
+                                            </li>
+                                            <li
+                                                v-for="(segment, index) in breadcrumbs"
+                                                :key="index"
+                                                class="breadcrumb-item"
+                                                :class="{ active: index === breadcrumbs.length - 1 }">
+                                                <a
+                                                    v-if="index < breadcrumbs.length - 1"
+                                                    href="#"
+                                                    @click.prevent="browsePath(getBreadcrumbPath(index))">
+                                                    {{ segment }}
+                                                </a>
+                                                <span v-else>{{ segment }}</span>
+                                            </li>
+                                        </ol>
+                                    </nav>
+                                </div>
+
+                                <!-- Loading indicator -->
+                                <div v-if="browserLoading" class="text-center py-3">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+
+                                <!-- File/Folder list -->
+                                <div v-else-if="browserItems.length > 0" class="file-browser">
+                                    <div class="list-group">
+                                        <!-- Parent directory link -->
+                                        <a
+                                            v-if="browserData.parentPath !== null"
+                                            href="#"
+                                            class="list-group-item list-group-item-action"
+                                            @click.prevent="browsePath(browserData.parentPath === '.' ? '' : browserData.parentPath)">
+                                            <i class="fas fa-level-up-alt text-secondary"></i>
+                                            <strong>.. (Parent Directory)</strong>
+                                        </a>
+
+                                        <!-- Directories -->
+                                        <div
+                                            v-for="item in browserItems.filter(i => i.type === 'directory')"
+                                            :key="item.path"
+                                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                            <div
+                                                class="flex-grow-1"
+                                                @click.prevent="browsePath(item.path)"
+                                                style="cursor: pointer">
+                                                <i class="fas fa-folder text-warning"></i>
+                                                {{ item.name }}
+                                                <small class="text-muted ms-2">Directory</small>
+                                            </div>
+                                            <button
+                                                class="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center p-0"
+                                                @click.stop="deleteFileOrFolder(item)"
+                                                :disabled="gitOperationInProgress"
+                                                data-bs-toggle="tooltip"
+                                                title="Delete folder"
+                                                style="width: 32px; height: 32px; text-align: center">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Files -->
+                                        <div
+                                            v-for="item in browserItems.filter(i => i.type === 'file')"
+                                            :key="item.path"
+                                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                            <div
+                                                class="flex-grow-1"
+                                                @click.prevent="selectFile(item)"
+                                                style="cursor: pointer">
+                                                <i class="fas fa-file" :class="getFileIcon(item.extension)"></i>
+                                                {{ item.name }}
+                                                <small class="text-muted ms-2">
+                                                    {{ formatFileSize(item.size) }} • {{ formatDate(item.modified) }}
+                                                </small>
+                                            </div>
+                                            <button
+                                                class="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center p-0"
+                                                @click.stop="deleteFileOrFolder(item)"
+                                                :disabled="gitOperationInProgress"
+                                                data-bs-toggle="tooltip"
+                                                title="Delete file"
+                                                style="width: 32px; height: 32px; text-align: center">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Empty state -->
+                                <div v-else class="text-center py-4">
+                                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">{{ browserData.message || 'This directory is empty' }}</p>
+                                </div>
+
+                                <!-- Upload Progress -->
+                                <div v-if="uploadProgress.isUploading" class="mt-3">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-upload text-info"></i>
+                                                Uploading Files...
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-2">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>{{ uploadProgress.currentFile }}</span>
+                                                    <span>
+                                                        {{ uploadProgress.filesCompleted }} / {{
+                                                        uploadProgress.totalFiles }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="progress">
+                                                <div
+                                                    class="progress-bar progress-bar-striped progress-bar-animated"
+                                                    :style="{ width: uploadProgress.percentage + '%' }"
+                                                    :class="uploadProgress.error ? 'bg-danger' : 'bg-success'">
+                                                    {{ uploadProgress.percentage }}%
+                                                </div>
+                                            </div>
+                                            <div v-if="uploadProgress.error" class="text-danger mt-2">
+                                                <small>{{ uploadProgress.error }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer d-flex justify-content-between">
+                                <div>
+                                    <!-- File operations buttons -->
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-success btn-sm me-2"
+                                        @click="showCreateFolderModal"
+                                        v-if="browserData.targetMode === 'fileManager'"
+                                        :disabled="gitOperationInProgress"
+                                        data-bs-toggle="tooltip"
+                                        title="Create new folder">
+                                        <i class="fas fa-folder-plus"></i>
+                                        New Folder
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-info btn-sm me-2"
+                                        @click="triggerFileUpload"
+                                        v-if="browserData.targetMode === 'fileManager'"
+                                        :disabled="gitOperationInProgress || uploadProgress.isUploading"
+                                        data-bs-toggle="tooltip"
+                                        title="Upload files">
+                                        <i class="fas fa-upload"></i>
+                                        Upload Files
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-warning btn-sm me-2"
+                                        @click="triggerFolderUpload"
+                                        v-if="browserData.targetMode === 'fileManager'"
+                                        :disabled="gitOperationInProgress || uploadProgress.isUploading"
+                                        data-bs-toggle="tooltip"
+                                        title="Upload folder">
+                                        <i class="fas fa-folder-open"></i>
+                                        Upload Folder
+                                    </button>
+                                    <input
+                                        type="file"
+                                        ref="fileUploadInput"
+                                        multiple
+                                        style="display: none"
+                                        @change="handleFileUpload" />
+                                    <input
+                                        type="file"
+                                        ref="folderUploadInput"
+                                        webkitdirectory
+                                        multiple
+                                        style="display: none"
+                                        @change="handleFolderUpload" />
+                                </div>
+                                <div>
+                                    <!-- Action buttons -->
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-danger"
+                                        @click="deleteCurrentDirectory"
+                                        v-if="browserData.currentPath && browserData.currentPath.length > 0"
+                                        :disabled="gitOperationInProgress"
+                                        data-bs-toggle="tooltip"
+                                        title="Delete current directory">
+                                        <i class="fas fa-trash-alt"></i>
+                                        Delete Current Directory
+                                    </button>
+                                    &nbsp;
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        @click="selectCurrentDirectory"
+                                        v-if="browserSelectionMode === 'directory'">
+                                        <i class="fas fa-folder"></i>
+                                        Select Current Directory
+                                    </button>
+                                    &nbsp;
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Folder Modal -->
+                <div
+                    class="modal fade"
+                    id="createFolderModal"
+                    tabindex="-1"
+                    aria-labelledby="createFolderModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="createFolderModalLabel">
+                                    <i class="fas fa-folder-plus text-success"></i>
+                                    Create New Folder
+                                </h5>
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form @submit.prevent="createFolder">
+                                    <div class="mb-3">
+                                        <label for="folderName" class="form-label">Folder Name *</label>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="folderName"
+                                            v-model="newFolderData.name"
+                                            required
+                                            placeholder="Enter folder name"
+                                            :disabled="newFolderData.isCreating"
+                                            maxlength="255" />
+                                        <div class="form-text">
+                                            <small class="text-muted">
+                                                Folder will be created in:
+                                                <strong>{{ browserData.currentPath || 'apps' }}</strong>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal"
+                                    :disabled="newFolderData.isCreating">
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-success"
+                                    @click="createFolder"
+                                    :disabled="!newFolderData.name || newFolderData.isCreating">
+                                    <span
+                                        v-if="newFolderData.isCreating"
+                                        class="spinner-border spinner-border-sm me-2"></span>
+                                    <i v-else class="fas fa-folder-plus me-1"></i>
+                                    {{ newFolderData.isCreating ? 'Creating...' : 'Create Folder' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Confirm Modal -->
+                <div
+                    class="modal fade"
+                    id="customConfirmModal"
+                    tabindex="-1"
+                    aria-labelledby="customConfirmModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="customConfirmModalLabel">
+                                    <i class="fas fa-question-circle text-warning"></i>
+                                    {{ confirmData.title }}
+                                </h5>
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-exclamation-triangle text-warning fa-2x me-3 mt-1"></i>
+                                    <div>
+                                        <div v-html="confirmData.message"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal"
+                                    @click="confirmData.onCancel">
+                                    <i class="fas fa-times"></i>
+                                    {{ confirmData.cancelText }}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-danger"
+                                    data-bs-dismiss="modal"
+                                    @click="confirmData.onConfirm">
+                                    <i class="fas fa-check"></i>
+                                    {{ confirmData.confirmText }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Alert Modal -->
+                <div
+                    class="modal fade"
+                    id="customAlertModal"
+                    tabindex="-1"
+                    aria-labelledby="customAlertModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="customAlertModalLabel">
+                                    <i :class="alertData.iconClass"></i>
+                                    {{ alertData.title }}
+                                </h5>
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-flex align-items-start">
+                                    <i :class="alertData.iconClass + ' fa-2x me-3 mt-1'"></i>
+                                    <div>
+                                        <div v-html="alertData.message"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary"
+                                    data-bs-dismiss="modal"
+                                    @click="alertData.onOk">
+                                    <i class="fas fa-check"></i>
+                                    {{ alertData.okText }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Login Modal -->
+                <div
+                    class="modal fade"
+                    id="loginModal"
+                    tabindex="-1"
+                    aria-labelledby="loginModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="loginModalLabel">
+                                    <i class="fas fa-lock text-warning"></i>
+                                    Login Required
+                                </h5>
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form @submit.prevent="login">
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label">Password</label>
+                                        <div class="input-group">
+                                            <input
+                                                :type="loginData.showPassword ? 'text' : 'password'"
+                                                class="form-control"
+                                                id="password"
+                                                v-model="loginData.password"
+                                                :disabled="loginData.isLoading"
+                                                placeholder="Enter password"
+                                                autocomplete="current-password"
+                                                required />
+                                            <button
+                                                class="btn btn-outline-secondary"
+                                                type="button"
+                                                @click="togglePasswordVisibility"
+                                                :disabled="loginData.isLoading">
+                                                <i
+                                                    class="fas"
+                                                    :class="loginData.showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">
+                                            <small class="text-muted">
+                                                Default password is "admin". Use reset-password.js to change it.
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div v-if="loginData.error" class="alert alert-danger" role="alert">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ loginData.error }}
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal"
+                                    :disabled="loginData.isLoading">
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-warning"
+                                    @click="login"
+                                    :disabled="loginData.isLoading || !loginData.password">
+                                    <span v-if="loginData.isLoading">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        Logging in...
+                                    </span>
+                                    <span v-else>
+                                        <i class="fas fa-sign-in-alt"></i>
+                                        Login
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Password Modal -->
+                <div
+                    class="modal fade"
+                    id="changePasswordModal"
+                    tabindex="-1"
+                    aria-labelledby="changePasswordModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="changePasswordModalLabel">
+                                    <i class="fas fa-key text-warning"></i>
+                                    Change Password
+                                </h5>
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form @submit.prevent="changePassword">
+                                    <div class="mb-3">
+                                        <label for="currentPassword" class="form-label">Current Password</label>
+                                        <div class="input-group">
+                                            <input
+                                                :type="passwordChangeData.showCurrentPassword ? 'text' : 'password'"
+                                                class="form-control"
+                                                id="currentPassword"
+                                                v-model="passwordChangeData.currentPassword"
+                                                :disabled="passwordChangeData.isLoading"
+                                                placeholder="Enter current password"
+                                                autocomplete="current-password"
+                                                required />
+                                            <button
+                                                class="btn btn-outline-secondary"
+                                                type="button"
+                                                @click="toggleCurrentPasswordVisibility"
+                                                :disabled="passwordChangeData.isLoading">
+                                                <i
+                                                    class="fas"
+                                                    :class="passwordChangeData.showCurrentPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newPassword" class="form-label">New Password</label>
+                                        <div class="input-group">
+                                            <input
+                                                :type="passwordChangeData.showNewPassword ? 'text' : 'password'"
+                                                class="form-control"
+                                                id="newPassword"
+                                                v-model="passwordChangeData.newPassword"
+                                                :disabled="passwordChangeData.isLoading"
+                                                placeholder="Enter new password"
+                                                autocomplete="new-password"
+                                                minlength="4"
+                                                required />
+                                            <button
+                                                class="btn btn-outline-secondary"
+                                                type="button"
+                                                @click="toggleNewPasswordVisibility"
+                                                :disabled="passwordChangeData.isLoading">
+                                                <i
+                                                    class="fas"
+                                                    :class="passwordChangeData.showNewPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">
+                                            <small class="text-muted">
+                                                Password must be at least 4 characters long
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                                        <div class="input-group">
+                                            <input
+                                                :type="passwordChangeData.showConfirmPassword ? 'text' : 'password'"
+                                                class="form-control"
+                                                id="confirmPassword"
+                                                v-model="passwordChangeData.confirmPassword"
+                                                :disabled="passwordChangeData.isLoading"
+                                                placeholder="Confirm new password"
+                                                autocomplete="new-password"
+                                                required />
+                                            <button
+                                                class="btn btn-outline-secondary"
+                                                type="button"
+                                                @click="toggleConfirmPasswordVisibility"
+                                                :disabled="passwordChangeData.isLoading">
+                                                <i
+                                                    class="fas"
+                                                    :class="passwordChangeData.showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div v-if="passwordChangeData.error" class="alert alert-danger" role="alert">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ passwordChangeData.error }}
+                                    </div>
+                                    <div v-if="passwordChangeData.success" class="alert alert-success" role="alert">
+                                        <i class="fas fa-check-circle"></i>
+                                        {{ passwordChangeData.success }}
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal"
+                                    :disabled="passwordChangeData.isLoading">
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-warning"
+                                    @click="changePassword"
+                                    :disabled="passwordChangeData.isLoading || !isPasswordChangeFormValid">
+                                    <span v-if="passwordChangeData.isLoading">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        Changing...
+                                    </span>
+                                    <span v-else>
+                                        <i class="fas fa-key"></i>
+                                        Change Password
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Information Modal -->
+                <div class="modal fade" id="systemInfoModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    System Information
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row g-3">
+                                    <!-- Runtime Information -->
+                                    <div class="col-lg-6 col-md-12">
+                                        <div class="system-info-section">
+                                            <h6 class="text-muted mb-3">
+                                                <i class="fas fa-code me-2"></i>
+                                                Runtime Environment
+                                            </h6>
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <div class="system-info-item">
+                                                        <i class="fab fa-node-js text-success"></i>
+                                                        <div class="system-info-content">
+                                                            <small class="text-muted d-block">Node.js</small>
+                                                            <span class="fw-bold">
+                                                                {{ systemInfo.nodeVersion || 'Unknown' }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="system-info-item">
+                                                        <i class="fab fa-npm text-danger"></i>
+                                                        <div class="system-info-content">
+                                                            <small class="text-muted d-block">npm</small>
+                                                            <span class="fw-bold">
+                                                                {{ systemInfo.npmVersion || 'Unknown' }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- System Information -->
+                                    <div class="col-lg-6 col-md-12">
+                                        <div class="system-info-section">
+                                            <h6 class="text-muted mb-3">
+                                                <i class="fas fa-desktop me-2"></i>
+                                                System Details
+                                            </h6>
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <div class="system-info-item">
+                                                        <i class="fas fa-laptop text-primary"></i>
+                                                        <div class="system-info-content">
+                                                            <small class="text-muted d-block">Platform</small>
+                                                            <span class="fw-bold">
+                                                                {{ systemInfo.platform || 'Unknown' }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="system-info-item">
+                                                        <i class="fas fa-microchip text-info"></i>
+                                                        <div class="system-info-content">
+                                                            <small class="text-muted d-block">Architecture</small>
+                                                            <span class="fw-bold">
+                                                                {{ systemInfo.arch || 'Unknown' }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Server Configuration -->
+                                <div class="row g-3 mt-2">
+                                    <div class="col-12">
+                                        <div class="system-info-section">
+                                            <h6 class="text-muted mb-3">
+                                                <i class="fas fa-cog me-2"></i>
+                                                Server Configuration
+                                            </h6>
+                                            <div class="row g-2">
+                                                <div class="col-lg-4 col-md-6">
+                                                    <div class="system-info-item">
+                                                        <i class="fas fa-network-wired text-primary"></i>
+                                                        <div class="system-info-content">
+                                                            <small class="text-muted d-block">Server Port</small>
+                                                            <span class="fw-bold">
+                                                                {{ systemInfo.serverPort || '3000' }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-md-6">
+                                                    <div class="system-info-item">
+                                                        <i
+                                                            class="fas fa-shield-alt"
+                                                            :class="systemInfo.corsEnabled ? 'text-success' : 'text-warning'"></i>
+                                                        <div class="system-info-content">
+                                                            <small class="text-muted d-block">CORS Status</small>
+                                                            <span
+                                                                class="fw-bold"
+                                                                :class="systemInfo.corsEnabled ? 'text-success' : 'text-warning'">
+                                                                {{ systemInfo.corsEnabled ? 'Enabled' : 'Disabled' }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Performance Metrics -->
+                                <div class="row g-3 mt-2">
+                                    <div class="col-12">
+                                        <div class="system-info-section">
+                                            <h6 class="text-muted mb-3">
+                                                <i class="fas fa-chart-line me-2"></i>
+                                                Performance Metrics
+                                            </h6>
+                                            <div class="row g-2">
+                                                <div class="col-lg-4 col-md-6">
+                                                    <div class="system-info-item">
+                                                        <i class="fas fa-memory text-warning"></i>
+                                                        <div class="system-info-content">
+                                                            <small class="text-muted d-block">Memory Usage</small>
+                                                            <span class="fw-bold">
+                                                                {{ formatMemory(systemInfo.memory) }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-md-6">
+                                                    <div class="system-info-item">
+                                                        <i class="fas fa-tachometer-alt text-success"></i>
+                                                        <div class="system-info-content">
+                                                            <small class="text-muted d-block">CPU Usage</small>
+                                                            <span class="fw-bold">
+                                                                {{ (systemInfo.cpu || 0).toFixed(1) }}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-md-12">
+                                                    <div class="system-info-item">
+                                                        <i class="fas fa-clock text-secondary"></i>
+                                                        <div class="system-info-content">
+                                                            <small class="text-muted d-block">Server Uptime</small>
+                                                            <span class="fw-bold">
+                                                                {{ formatServerUptime(systemInfo.uptime) }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Git Clone Modal -->
+                <div class="modal fade" id="gitCloneModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fab fa-git-alt me-2"></i>
+                                    Git Clone Repository
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form @submit.prevent="executeGitClone">
+                                    <div class="mb-3">
+                                        <label for="gitUrl" class="form-label">Repository URL</label>
+                                        <input
+                                            type="url"
+                                            class="form-control"
+                                            id="gitUrl"
+                                            v-model="gitCloneData.url"
+                                            placeholder="https://github.com/user/repo.git"
+                                            required />
+                                        <div class="form-text">
+                                            Repository will be cloned to apps/[repository-name]. URL prefixes may be
+                                            restricted by server configuration.
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button
+                                    type="button"
+                                    class="btn btn-warning"
+                                    @click="executeGitClone"
+                                    :disabled="!gitCloneData.url || gitOperationInProgress">
+                                    <span
+                                        v-if="gitOperationInProgress"
+                                        class="spinner-border spinner-border-sm me-2"></span>
+                                    <i v-else class="fas fa-download me-1"></i>
+                                    {{ gitOperationInProgress ? 'Cloning...' : 'Clone Repository' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Git Pull Modal -->
+                <div class="modal fade" id="gitPullModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fab fa-git-alt me-2"></i>
+                                    Git Pull Updates
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center">
+                                    <i class="fab fa-git-alt fa-3x text-info mb-3"></i>
+                                    <h5>Select Directory for Git Pull</h5>
+                                    <p class="text-muted">
+                                        Choose a git repository directory to pull the latest updates. The git pull
+                                        command will run automatically after selection.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        class="btn btn-info btn-lg"
+                                        @click="openDirectoryBrowser('gitPull')">
+                                        <i class="fas fa-folder-open me-2"></i>
+                                        Select Directory
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NPM Install Modal -->
+                <div class="modal fade" id="npmInstallModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fab fa-npm me-2"></i>
+                                    NPM Install Dependencies
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center">
+                                    <i class="fab fa-npm fa-3x text-danger mb-3"></i>
+                                    <h5>Select Directory for NPM Install</h5>
+                                    <p class="text-muted">
+                                        Choose a directory containing package.json to install dependencies. The npm
+                                        install command will run automatically after selection.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger btn-lg"
+                                        @click="openDirectoryBrowser('npmInstall')">
+                                        <i class="fas fa-folder-open me-2"></i>
+                                        Select Directory
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End of authenticated content -->
+
+            <!-- Toast Container -->
+            <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                <div v-for="toast in toasts" :key="toast.id" class="toast show" role="alert">
+                    <div class="toast-header" :class="'bg-' + toast.type">
+                        <strong class="me-auto text-white">{{ toast.title }}</strong>
+                        <button type="button" class="btn-close btn-close-white" @click="removeToast(toast.id)"></button>
+                    </div>
+                    <div class="toast-body">{{ toast.message }}</div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+
+<script src="https://unpkg.com/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>

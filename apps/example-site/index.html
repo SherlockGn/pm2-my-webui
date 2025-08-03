@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM2 WebUI - Test Static Site</title>
+    <link href="https://unpkg.com/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-rocket"></i> Test Static Site
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section id="home" class="hero">
+        <div class="container text-center">
+            <h1 class="display-4 mb-4">Welcome to PM2 WebUI Test Site</h1>
+            <p class="lead mb-4">This is a static website served by PM2 to test the static file serving functionality</p>
+            <button class="btn btn-light btn-lg" onclick="updateTime()">
+                <i class="fas fa-clock"></i> Update Time
+            </button>
+            <div class="mt-4">
+                <h5>Current Time: <span id="current-time" class="badge bg-light text-dark"></span></h5>
+                <h6>Page Loaded: <span id="load-time" class="badge bg-light text-dark"></span></h6>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2 class="mb-4">About This Test</h2>
+                    <p class="lead">
+                        This static website is being served by PM2 using the <code>pm2 serve</code> command.
+                        It demonstrates that PM2 can serve static files just like any web server.
+                    </p>
+                    <div class="row mt-5">
+                        <div class="col-md-4">
+                            <div class="card feature-card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-server fa-3x text-primary mb-3"></i>
+                                    <h5>PM2 Served</h5>
+                                    <p>Served directly by PM2 process manager</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card feature-card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-bolt fa-3x text-warning mb-3"></i>
+                                    <h5>Fast & Reliable</h5>
+                                    <p>Static file serving with PM2's reliability</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card feature-card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cog fa-3x text-success mb-3"></i>
+                                    <h5>Easy Management</h5>
+                                    <p>Managed through PM2 WebUI interface</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Static File Serving Features</h2>
+            <div class="row">
+                <div class="col-lg-6">
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <i class="fas fa-check text-success me-2"></i>
+                            HTML, CSS, and JavaScript files
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Images and media files
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Single Page Application (SPA) support
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Process monitoring and management
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-info-circle"></i> Process Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Server Type:</strong> PM2 Static File Server</p>
+                            <p><strong>Protocol:</strong> HTTP</p>
+                            <p><strong>SPA Mode:</strong> Enabled</p>
+                            <p><strong>Management:</strong> PM2 WebUI</p>
+                            <button class="btn btn-primary btn-sm" onclick="showProcessInfo()">
+                                Show Browser Info
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-dark text-white py-4">
+        <div class="container text-center">
+            <p>&copy; 2024 PM2 WebUI Test Site. Served by PM2 Static File Server.</p>
+            <p>
+                <small>
+                    Visit count: <span id="visit-count" class="badge bg-primary">1</span> |
+                    Last updated: <span id="last-update"></span>
+                </small>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
