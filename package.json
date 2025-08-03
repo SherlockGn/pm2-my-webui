@@ -6,6 +6,12 @@
   "scripts": {
     "start": "node server/app.js",
     "dev": "nodemon server/app.js",
+    "pm2:start": "node run-as-pm2.js",
+    "pm2:stop": "node run-as-pm2.js stop",
+    "pm2:restart": "node run-as-pm2.js restart",
+    "pm2:status": "node run-as-pm2.js status",
+    "pm2:logs": "node run-as-pm2.js logs",
+    "pm2:delete": "node run-as-pm2.js delete",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

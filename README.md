@@ -56,7 +56,6 @@ A modern web interface for PM2 process manager built with Express.js backend and
 ## Prerequisites
 
 - Node.js (v14 or higher)
-- PM2 installed globally (`npm install -g pm2`)
 
 ## Installation
 
@@ -72,19 +71,91 @@ npm install
 ```
 
 3. Start the application:
+
+**Option A: Direct Start**
 ```bash
 npm start
 ```
 
-Or for development with auto-restart:
+**Option B: Development Mode (with auto-restart)**
 ```bash
 npm run dev
+```
+
+**Option C: Production with PM2 (Recommended)**
+```bash
+# Start with PM2 management
+npm run pm2:start
+# or
+node run-as-pm2.js
+
+# Other PM2 commands
+npm run pm2:status   # Check status
+npm run pm2:logs     # View logs
+npm run pm2:restart  # Restart
+npm run pm2:stop     # Stop
+npm run pm2:delete   # Remove from PM2
 ```
 
 4. Open your browser and navigate to:
 ```
 http://localhost:3000
 ```
+
+## PM2 Management Script
+
+The included `run-as-pm2.js` script allows you to manage the PM2 WebUI using PM2 itself, providing better process monitoring, automatic restarts, and log management.
+
+### Features
+
+- **Programmatic PM2 API**: Uses the local PM2 module instead of global commands
+- **Automatic Process Management**: Handles existing processes gracefully
+- **Comprehensive Logging**: Dedicated log files with rotation
+- **Memory Management**: Automatic restart on high memory usage (500MB limit)
+- **Error Recovery**: Automatic restart on crashes with backoff strategy
+
+### Usage
+
+```bash
+# Start PM2 WebUI with PM2
+node run-as-pm2.js
+# or
+npm run pm2:start
+
+# Check status
+node run-as-pm2.js status
+npm run pm2:status
+
+# View logs
+node run-as-pm2.js logs
+npm run pm2:logs
+
+# Restart
+node run-as-pm2.js restart
+npm run pm2:restart
+
+# Stop
+node run-as-pm2.js stop
+npm run pm2:stop
+
+# Remove from PM2
+node run-as-pm2.js delete
+npm run pm2:delete
+
+# Help
+node run-as-pm2.js help
+```
+
+### PM2 Configuration
+
+The script automatically configures PM2 with:
+
+- **Process Name**: `pm2-webui`
+- **Instances**: 1 (fork mode)
+- **Memory Limit**: 500MB (auto-restart)
+- **Auto-restart**: Enabled with 10 max restarts
+- **Logs**: Dedicated log directory (`logs/pm2-webui/`)
+- **Environment**: Production settings
 
 ## Authentication
 
