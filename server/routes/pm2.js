@@ -482,15 +482,17 @@ router.post('/git/clone', async (req, res) => {
         }
 
         // Validate URL format and characters to prevent command injection
-        const urlRegex = /^https?:\/\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+\.git$/
+        // Support HTTP/HTTPS and SSH URLs
+        const urlRegex = /^(https?:\/\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+\.git|ssh:\/\/[a-zA-Z0-9\-._~@]+\/[a-zA-Z0-9\-._~/?#[\]@!$&'()*+,;=%\/]+\.git|git@[a-zA-Z0-9\-._~]+:[a-zA-Z0-9\-._~/?#[\]@!$&'()*+,;=%\/]+\.git)$/
         if (!urlRegex.test(url)) {
             return res.status(400).json({
-                error: 'Invalid Git URL format. Must be HTTP/HTTPS URL ending with .git'
+                error: 'Invalid Git URL format. Must be HTTP/HTTPS/SSH URL ending with .git'
             })
         }
 
         // Additional security: check for dangerous characters that could be used for injection
-        const dangerousChars = /[;&|`$(){}[\]\\'"<>]/
+        // Allow @ and : for SSH URLs, but block other dangerous characters
+        const dangerousChars = /[;&|`$(){}[\]\\'"<>\n\r]/
         if (dangerousChars.test(url)) {
             return res.status(400).json({
                 error: 'Git URL contains invalid characters'

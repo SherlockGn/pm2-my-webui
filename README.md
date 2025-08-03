@@ -263,7 +263,11 @@ Create a `config.json` file with the following structure:
   "git": {
     "allowedPrefixes": [
       "https://github.com/",
-      "https://gitlab.com/"
+      "https://gitlab.com/",
+      "ssh://git@github.com/",
+      "ssh://git@gitlab.com/",
+      "git@github.com:",
+      "git@gitlab.com:"
     ]
   }
 }
@@ -419,6 +423,10 @@ pm2-my-webui/
    - Clone repositories directly into the `/apps` directory
    - Pull updates from existing repositories
    - Security: Only allowed Git URL prefixes can be cloned
+   - **Supported URL formats**:
+     - HTTPS: `https://github.com/user/repo.git`
+     - SSH: `ssh://git@github.com/user/repo.git`
+     - SSH shorthand: `git@github.com:user/repo.git`
 
 6. **NPM Management**:
    - Install dependencies for Node.js projects
