@@ -1132,8 +1132,8 @@ createApp({
             gitOperationInProgress.value = true
 
             try {
-                // Extract relative path from full path
-                const relativePath = gitPullData.directory.replace(/^.*\/apps\//, '')
+                // Extract relative path from full path - handle both Windows and Unix paths
+                const relativePath = gitPullData.directory.replace(/^.*[\/\\]apps[\/\\]/, '')
 
                 const response = await fetch('/api/pm2/git/pull', {
                     method: 'POST',
@@ -1180,8 +1180,8 @@ createApp({
             gitOperationInProgress.value = true
 
             try {
-                // Extract relative path from full path
-                const relativePath = npmInstallData.directory.replace(/^.*\/apps\//, '')
+                // Extract relative path from full path - handle both Windows and Unix paths
+                const relativePath = npmInstallData.directory.replace(/^.*[\/\\]apps[\/\\]/, '')
 
                 const response = await fetch('/api/pm2/npm/install', {
                     method: 'POST',
