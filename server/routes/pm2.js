@@ -443,11 +443,6 @@ router.get('/browse', async (req, res) => {
             const stats = fs.statSync(filePath)
             const relativePath = path.relative(appsDir, filePath)
 
-            // Skip hidden files and node_modules
-            if (file.startsWith('.') || file === 'node_modules') {
-                continue
-            }
-
             items.push({
                 name: file,
                 type: stats.isDirectory() ? 'directory' : 'file',
