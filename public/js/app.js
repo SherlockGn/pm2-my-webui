@@ -1404,9 +1404,18 @@ createApp({
                     return
                 }
 
-                // Basic path validation
-                if (!newProcess.directory.startsWith('/')) {
-                    showToast('warning', 'Warning', 'Please provide an absolute path for the directory')
+                // Basic path validation - support both Unix and Windows absolute paths
+                const isAbsolutePath =
+                    newProcess.directory.startsWith('/') ||
+                    /^[a-zA-Z]:\\/.test(newProcess.directory) ||
+                    newProcess.directory.startsWith('\\\\')
+
+                if (!isAbsolutePath) {
+                    showToast(
+                        'warning',
+                        'Warning',
+                        'Please provide an absolute path for the directory (e.g., /path/to/dir or C:\\path\\to\\dir)'
+                    )
                     return
                 }
 

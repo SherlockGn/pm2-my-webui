@@ -68,6 +68,11 @@ router.post('/processes/start', async (req, res) => {
             processName = name || `static-${port}`
             processCwd = path.resolve(directory)
 
+            // Check if the directory exists
+            if (!fs.existsSync(processCwd)) {
+                return res.status(404).json({ error: 'Static directory not found' })
+            }
+
             // Create process-specific log directory
             const processLogDir = path.join(logsDir, processName)
             if (!fs.existsSync(processLogDir)) {
@@ -483,7 +488,8 @@ router.post('/git/clone', async (req, res) => {
 
         // Validate URL format and characters to prevent command injection
         // Support HTTP/HTTPS and SSH URLs
-        const urlRegex = /^(https?:\/\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+\.git|ssh:\/\/[a-zA-Z0-9\-._~@]+\/[a-zA-Z0-9\-._~/?#[\]@!$&'()*+,;=%\/]+\.git|git@[a-zA-Z0-9\-._~]+:[a-zA-Z0-9\-._~/?#[\]@!$&'()*+,;=%\/]+\.git)$/
+        const urlRegex =
+            /^(https?:\/\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+\.git|ssh:\/\/[a-zA-Z0-9\-._~@]+\/[a-zA-Z0-9\-._~/?#[\]@!$&'()*+,;=%\/]+\.git|git@[a-zA-Z0-9\-._~]+:[a-zA-Z0-9\-._~/?#[\]@!$&'()*+,;=%\/]+\.git)$/
         if (!urlRegex.test(url)) {
             return res.status(400).json({
                 error: 'Invalid Git URL format. Must be HTTP/HTTPS/SSH URL ending with .git'
