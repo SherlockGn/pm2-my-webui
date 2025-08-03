@@ -472,9 +472,8 @@ createApp({
         }
 
         const selectCurrentDirectory = () => {
-            // Construct full path from server data
-            const basePath = '/Users/tianhegong/Documents/Coding/pm2-my-webui/apps'
-            const fullPath = browserData.currentPath ? `${basePath}/${browserData.currentPath}` : basePath
+            // Use the current full path provided by the server
+            const fullPath = browserData.currentFullPath || browserData.baseDirectory || ''
 
             // Handle different target modes
             if (browserData.targetMode === 'gitPull') {
@@ -983,9 +982,12 @@ createApp({
 
                     // Look for 4-digit port numbers in the first 10 lines
                     for (const line of logs) {
-                        const portMatch = line.match(/\b(\d{4})\b/)
+                        // Match 4-digit numbers that are likely to be port numbers, avoiding dates
+                        const portMatch =
+                            line.match(/(?:port|listening|server).*?(\d{4})|:(\d{4})\b/i) ||
+                            (!/\d{4}-\d{2}/.test(line) ? line.match(/\b(\d{4})\b/) : null)
                         if (portMatch) {
-                            const port = parseInt(portMatch[1])
+                            const port = parseInt(portMatch[1] || portMatch[2] || portMatch[0])
                             // Validate port range (common web server ports)
                             if (port >= 1000 && port <= 9999) {
                                 const baseUrl = `${window.location.protocol}//${window.location.hostname}`

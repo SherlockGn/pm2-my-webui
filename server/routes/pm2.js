@@ -470,7 +470,9 @@ router.get('/browse', async (req, res) => {
         res.json({
             items,
             currentPath: path.relative(appsDir, targetDir),
-            parentPath: dir ? path.dirname(dir) : null
+            currentFullPath: targetDir,
+            parentPath: dir ? path.dirname(dir) : null,
+            baseDirectory: appsDir
         })
     } catch (error) {
         res.status(500).json({ error: error.message })
