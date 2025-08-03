@@ -459,7 +459,8 @@ createApp({
                 newProcess.script = item.fullPath
             } else {
                 // For directory mode, get the directory containing the file
-                const lastSlashIndex = item.fullPath.lastIndexOf('/')
+                // Handle both Windows (\) and Unix (/) path separators
+                const lastSlashIndex = Math.max(item.fullPath.lastIndexOf('/'), item.fullPath.lastIndexOf('\\'))
                 newProcess.directory = lastSlashIndex > 0 ? item.fullPath.substring(0, lastSlashIndex) : item.fullPath
             }
 
