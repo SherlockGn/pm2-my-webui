@@ -833,6 +833,7 @@ router.post('/npm/install', async (req, res) => {
                 // Use spawn instead of exec to avoid shell interpretation
                 npmProcess = spawn(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['install'], {
                     cwd: targetDir,
+                    shell: false,
                     stdio: ['pipe', 'pipe', 'pipe']
                 })
 
